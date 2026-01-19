@@ -1,0 +1,28 @@
+En primer lugar, inicie sesión en Azure con la CLI de Azure o Azure PowerShell.
+
+CLI de Azure
+az login
+
+PowerShell  
+Connect-AzAccount
+
+Después, defina el grupo de recursos. Puede usar un grupo de recursos ya definido o crear uno nuevo con el siguiente comando. Puede obtener los valores de ubicación disponibles en: az account list-locations (la CLI) o Get-AzLocation (PowerShell). Puede configurar la ubicación predeterminada mediante az configure --defaults location=<location>.
+
+CLI Azure
+az group create --name {name of your resource group} --location "{location}"
+
+PoweShell
+New-AzResourceGroup -Name {name of your resource group} -Location "{location}"
+
+Ejercicio: Creación e implementación de una plantilla de Azure Resource Manager
+En este ejercicio, creará una plantilla de Azure Resource Manager (ARM), la implementará en Azure y, a continuación, actualizará esa plantilla de ARM para agregar parámetros y salidas.
+
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "functions": [],
+  "variables": {},
+  "resources": [],
+  "outputs": {}
+}
