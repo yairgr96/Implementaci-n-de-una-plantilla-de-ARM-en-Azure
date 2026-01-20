@@ -1,0 +1,101 @@
+Manual de Laboratorio: Conjunto de Escalado de Máquinas Virtuales (VMSS) en Azure
+
+Este laboratorio despliega un servidor web de alta disponibilidad utilizando un conjunto de escalado, 
+un balanceador de carga y una configuración automatizada mediante cloud-init.
+
+🛠 Paso 1: Configuración del archivo Cloud-Init
+Crea un archivo llamado cloud-init.yaml para automatizar la instalación de Nginx y la creación de una página personalizada.
+
+#cloud-config
+package_upgrade: true
+packages:
+  - nginx
+write_files:
+  - owner: www-data:www-data
+    path: /var/www/html/index.html
+    content: |
+        Hello world from Virtual Machine Scale Set !
+runcmd:
+  - service nginx restart
+
+  🚀 Paso 2: Despliegue de la Infraestructura
+1. Crear el Grupo de Recursos
+Utilizaremos una región con alta disponibilidad para cuentas académicas (westus2 o centralus).
+
+az group create --name myResourceGroupLab --location westus2
+
+Crear el Conjunto de Escalado (VMSS)
+Nota importante: Se utiliza el SKU Standard_DS1_v2 porque tiene mayor disponibilidad que la serie B en regiones saturadas.
+
+az vmss create \
+  --resource-group myResourceGroupLab \
+  --name webServerScaleSet \
+  --image Ubuntu2204 \
+  --upgrade-policy-mode automatic \
+  --custom-data cloud-init.yaml \
+  --admin-username azureuser \
+  --generate-ssh-keys \
+  --location westus2 \
+  --vm-sku Standard_DS1_v2
+
+  ⚖️ Paso 3: Configuración del Balanceador de Carga (LB)
+1. Crear el Sondeo de Salud (Health Probe)
+Permite al balanceador saber si las VMs están respondiendo en el puerto 80.
+
+az network lb probe create \
+  --resource-group myResourceGroupLab \
+  --lb-name webServerScaleSetLB \
+  --name webServerHealth \
+  --port 80 \
+  --protocol Http \
+  --path /
+
+2. Crear la Regla de Equilibrio de Carga
+Mapea el tráfico del puerto 80 público al puerto 80 de las instancias internas.
+
+az network lb rule create \
+  --resource-group myResourceGroupLab \
+  --name webServerLoadBalancerRuleWeb \
+  --lb-name webServerScaleSetLB \
+  --probe-name webServerHealth \
+  --backend-pool-name webServerScaleSetLBBEPool \
+  --backend-port 80 \
+  --frontend-ip-name loadBalancerFrontEnd \
+  --frontend-port 80 \
+  --protocol tcp
+
+  🛡️ Paso 4: Configuración de Seguridad (NSG)
+Por defecto, Azure bloquea el tráfico web. Debemos abrir el puerto 80 en el Grupo de Seguridad de Red.
+
+az network nsg rule create \
+  --resource-group myResourceGroupLab \
+  --nsg-name webServerScaleSetNSG \
+  --name allowHTTPInbound \
+  --priority 100 \
+  --destination-port-ranges 80 \
+  --access Allow \
+  --protocol Tcp \
+  --description "Permitir trafico HTTP entrante"
+
+  🏁 Paso 5: Verificación
+1. Obtener la dirección IP Pública
+
+az network public-ip show \
+  --resource-group myResourceGroupLab \
+  --name webServerScaleSetLBPublicIP \
+  --query ipAddress \
+  --output tsv
+
+  2. Acceso Web
+Copia la IP obtenida y pégala en tu navegador. Deberías ver:
+
+Hello world from Virtual Machine Scale Set !
+
+🔍 Resolución de Problemas (Troubleshooting)
+Durante el desarrollo de este laboratorio se resolvieron los siguientes retos técnicos:
+
+RequestDisallowedByAzure: Algunas regiones como eastus pueden estar restringidas por políticas de suscripción. Se migró el despliegue a westus2.
+
+SkuNotAvailable: La capacidad de instancias B1s suele agotarse en regiones populares. Se optó por el SKU Standard_DS1_v2 que ofrece mayor estabilidad para laboratorios.
+
+ResourceGroupBeingDeleted: Se implementó el uso de nombres dinámicos para los grupos de recursos para evitar colisiones durante procesos de borrado y recreación rápida.
