@@ -6,6 +6,10 @@ un balanceador de carga y una configuración automatizada mediante cloud-init.
 🛠 Paso 1: Configuración del archivo Cloud-Init
 Crea un archivo llamado cloud-init.yaml para automatizar la instalación de Nginx y la creación de una página personalizada.
 
+En Cloud Shell, inicie el editor de código y cree un archivo llamado cloud-init.yaml.
+
+code cloud-init.yaml
+
 #cloud-config
 package_upgrade: true
 packages:
@@ -17,6 +21,10 @@ write_files:
         Hello world from Virtual Machine Scale Set !
 runcmd:
   - service nginx restart
+
+  Este archivo contiene información de configuración para instalar nginx en las máquinas virtuales del conjunto de escalado.
+
+Seleccione Ctrl+S para guardar el archivo y, a continuación, Ctrl+Q para cerrar el editor de código.
 
   🚀 Paso 2: Despliegue de la Infraestructura
 1. Crear el Grupo de Recursos

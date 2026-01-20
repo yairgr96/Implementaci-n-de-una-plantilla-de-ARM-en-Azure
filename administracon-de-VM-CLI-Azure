@@ -1,0 +1,4 @@
+Creación de una máquina virtual con Linux
+Vamos a crear una máquina virtual Linux. Ejecute el comando siguiente en Azure Cloud Shell para crear una máquina virtual con Ubuntu 
+en la ubicación Oeste de EE. UU.
+
